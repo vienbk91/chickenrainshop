@@ -11,24 +11,13 @@ use Cake\ORM\TableRegistry;
  */
 class BooksController extends AppController {
 	
-	/**
-	 * Thực thi truy vấn trong cakephp
-	 */
-	public function truyvan() {
-		$bookInstance = TableRegistry::get('Books');
-		$books = $bookInstance->find('all')->first();
-		
-		pr($books);
-		exit();
-	}
-	
     /**
      * Index method
      *
      * @return \Cake\Network\Response|null
      */
-    public function index()
-    {
+    public function index() {
+    	/*
         $this->paginate = [
             'contain' => ['Categories']
         ];
@@ -36,7 +25,14 @@ class BooksController extends AppController {
 
         $this->set(compact('books'));
         $this->set('_serialize', ['books']);
-    }
+		*/
+    	
+    	$bookInstance = TableRegistry::get('Books');
+    	$books = $bookInstance->latest();
+    	
+    	$this->set(compact('books'));
+    	
+	}
 
     /**
      * View method

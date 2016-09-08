@@ -1,7 +1,9 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // CakePHP3.3.1 Kiến thức cơ bản và cách xây dựng chickenrainshop project
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 Phần 1: Các thiết lập ban đầu
+
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 1. Phân tích yêu cầu: 
 Chickenrainshop là dự án triển khai hệ thống bán sách online được xây dựng bằng CakePHP3.3
@@ -11,6 +13,8 @@ năng tìm kiếm sách,...)
  + Thông tin sách: hiển thị nội dung cụ thể từng cuốn sách
  + Thông tin giỏ hàng: Hiển thị thông tin giỏ hàng của khách khi đặt mua sách 
 Ngoài ra chức năng admin sẽ được sử dụng để quản lý sách.
+
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 2. Xây dựng mô hình dữ liệu và csdl cho project 
@@ -159,38 +163,61 @@ Ta sẽ đi nói về từng hàm, chức năng và cách dùng của nó
 +list: tương tự như all nhưng chỉ trả về id
 +count:tìm những dữ liệu đc yêu cầu và trả về số mẫu tin mà nó tìm được
 +neighbors: Trả về mẫu tin đứng trước và sau mẫu tin mà chúng ta yêu cầu nó tìm
-+threaded: Thường sử dụng cho dữ liệu có cấu trúc cây, 
++threaded: Giống như là all, nhưng chỉ sử dụng cho dữ liệu có cấu trúc cây. 
 chẳng hạn như khi ta sử dụng TreeBehavior vào tìm categories thì ta cần dùng sử 
 dụng kiểu truy vấn này để làm cây danh mục.
 
-Đối với option - các tùy chọn khi truy vấn và được đặt trong 1 mảng , có 1 số tùy chọn 
-mà ta hay sử dụng
+Đối với option - các tùy chọn khi truy vấn và được đặt trong 1 mảng (với tùy chọn là key , 
+và điều kiện ràng buộc cho tùy chọn là value) , có 1 số tùy chọn mà ta hay sử dụng khi truy vấn: 
+
 +fields: Tùy chọn này sẽ giúp chúng ta lấy các trường dữ liệu mà chúng ta muốn trong csdl
+Nếu chỉ muốn lấy 1 trường thì ta đặt nó trong 1 cặp dấu nháy('') , nhưng nếu lấy nhiều trường
+thì ta cần đặt nó trong mảng
 +conditions: Điều kiện khi tìm kiếm csdl
+Tương tự như câu lệnh where trong query, và các điều kiện cũng được đặt trong 1 mảng
 +order: sắp xếp csdl theo 1 trường nào đó theo 1 thứ tự nào đó
 +limit: Lấy ra số lượng mẫu tin chỉ định (chỉ định là interger)
 +recursive: Tùy chọn này sẽ lấy dữ liệu theo mối quan hệ của bảng dữ liệu mà ta cần lấy
 Và có 4 mức recursive cho chúng ta tùy chọn là : -1 , 0 , 1 và 2
 
 VD: //Cakephp2.x
-$notes = $this->Model->find('all' , array(
+$notes = $this->Note->find('all' , array(
     'fields' => array('id' , 'title' , 'content') ,
     'conditions' => array('title LIKE' => '%PHP%') ,
     'order' => array('id' => 'asc') , // array('id asc'); cũng được
     'limit' => 5
 ));
 
+$notes = $this->Note->find('first');
+
 Trong cakephp2.x thì việc sử dụng find($type , $option) sẽ không có vấn đề gì xảy ra nhưng
 từ cakephp3.x trở đi, nó đã được thay thế khá nhiều.
-Trong cakephp3.x document, nó viết về việc sử dụng hàm find, nhưng thông qua 1 instance của Model
-nên trước khi sử dụng hàm find() này, ta cần load nó bằng cách:
-$instance_tbl = TableRegistry::get('tbl_name');
-$result = $instance_tbl->find($type , $option);
+
+Ở cakephp2.x thì kết quả của find sẽ trả về mảng, tuy nhiên từ 3.x trở đi thì tất cả đều được
+đưa về dưới dạng object. Vì thế việc sử dụng hàm pr($var) khá là khó debug trong cakephp3.x
+
+Trong cakephp3.x document, hàm find() cũng được support nhưng đã có nhiều thay đổi trong cách sử dụng.
+Do từ 3.x trở đi, cake không sử dụng trực tiếp 1 class Model mà thông qua 2 class Table và Modify nên
+khi sử dụng ta cần tạo ra 1 instance của Table.
+Vì thế trước khi sử dụng hàm find() này, ta cần load instance của Table bằng cách:
+
+$instance_tbl = TableRegistry::get('table_name');
+$result = $instance_tbl->find('all' , $option)->type_name();
+
 Trong cakephp3.x thì những $type = 'first' , 'count' sẽ không còn sử dụng được nữa , mà thay vào đó
-ta sẽ sử dụng $type = 'all' với $option , sau đó lấy kết quả thu được gọi tới first() , count()
+ta sẽ chỉ sử dụng $type = 'all' với $option , sau đó lấy kết quả thu được gọi tới first() , count()
 VD:
-$first = $result->first();
-$count = $result->count();
+$noteInstance = TableRegistry::get('Notes');
+$notes = $noteInstance->find('all');
+$first = $notes->first(); // $note->find()->first();
+$count = $notes->count(); // $note->find()->count();
+
+Về find list thì ta vẫn có thể sử dụng nó như 1 $type đặt trong find() được
+$bookInstance->find('list' , $option);
+Tuy nhiên list này sẽ ko phải trả về id mà sẽ trả về danh sách của $this->displayField('');
+đã được định nghĩa trong Table. Nếu trong class Table không ghi gì thì nó sẽ mặc định là id.
+
+Trong cakephp3.x thì recursive đã được loại bỏ mà thay vào đó chúng ta sẽ sử dụng contain để quản lý việc đó.
 
 Đối với find('neghbors') thì trong CakePHP3.x đã không còn hỗ trợ nó nữa, nên nếu muốn sử dụng bạn có thể
 biến tấu nó theo cách sau:
@@ -227,11 +254,85 @@ public function view($id = null) {
     $neighbors = $this->Examples->find('neighbors', $id );
 }
 
+Ngoài ra thì ta có thể sử dụng thêm 1 số cách truy vấn khác cũng với find() như sau:
+$instance->find()
+    ->where(条件A)
+    ->where(条件B)
+    ->order(ソート条件A)
+    ->order(ソート条件B)
+    ->select(取得フィールド)
+    ->all();
+Cụ thể hơn ta có thể tham khảo tại: 
+Cake3.x find():
++ http://qiita.com/kozo/items/87dc9f725e71dd742468 
++ http://qiita.com/zayarwinttun/items/7afae4cc9f5388babc38
+Cake2.x find(): http://qiita.com/Tomooki_Tatsuguchi/items/7ea21324dd90d9cf92d7
+
+Trong bài viết này, tác giả đã ghi rõ những thay đổi trong việc khai báo find() cũng như 
+sử dụng các type , option của nó trong cakephp2.x và 3.x
+http://norm-nois.com/blog/archives/3319 
 
 
 2- query() 
 Đối với query() thì sẽ rất thuận tiện cho những ai chưa thực sự quen thuộc với hàm find()
 Vì chỉ cần viết câu lệnh SQL và truyền vào query như 1 tham số thì nó sẽ thực thi tìm kiếm
 như những gì câu lệnh sql yêu cầu.
+$sql = "select * from books";
+$result = $this->Model->query($sql);
 
+Tuy nhiên trong CakePHP3.x thì cách này đã không còn được sử dụng trực tiếp thông qua Model
+mà thay vào đó ta phải dùng như sau:
+
+use Cake\Datasource\ConnectionManager;
+
+$sql = 'SELECT * FROM articles';
+$connection = ConnectionManager::get('my_connection')->execute($sql);
+// Get one row
+$results = $connection->fetch('assoc');
+// Get all row
+$results = $connection->fetchAll('assoc');
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+5. Quan hệ giữa các Model trong CakePHP
+Các mối quan hệ trong CakePHP
+Quan hệ 1-1: 1 thể hiện của A chỉ có thể có 1 thể hiện của B và ngược lại, 1 thể hiện của B
+chỉ thuộc 1 thể hiện của A.
+              A           <---(      chỉ có 1        )---->      B
+           (hasOne)                                           (hasOne)
+Quan hệ 1-n: 1 thể hiện của A có thể có 1 hoặc nhiều thể hiện của B , 1 thể hiện của B chỉ
+thuộc về 1 thể hiện của A
+              A           ----(có thể có 1 hoặc nhiều)---->      B
+           (hasMany)      <---(     chỉ thuộc về     )----   (belongTo)
+Quan hệ n-n: 1 thể hiện của A có thể có 1 hoặc nhiều thể hiện của A và ngược lại.
+              A           <-----(  có 1 hoặc nhiều   )---->      B
+           (belongsToMany)                                   (belongsToMany)
+
+Ta có thể xem về việc định nghĩa các mối quan hệ này trong các Table Object:
+Trong BooksTable ta thấy định nghĩa:
+        // 1 Book thì chỉ thuộc về 1 Categories
+        $this->belongsTo('Categories', [
+            'foreignKey' => 'category_id'
+        ]);
+        // 1 book thì có thể có 1 hoặc nhiều Comments
+        $this->hasMany('Comments', [
+            'foreignKey' => 'book_id'
+        ]);
+        // Một Book có thể có 1 hoặc nhiều người viết và 1 người có thể viết 1 hoặc nhiều sách
+        // Ta cũng sẽ thấy 1 định nghĩa tương tự trong WritersTable Object
+        $this->belongsToMany('Writers', [
+            'foreignKey' => 'book_id',
+            'targetForeignKey' => 'writer_id',
+            'joinTable' => 'books_writers'
+        ]);
+
+
+6. Sử dụng Containable Behavior
+Bài này tạm thời bỏ qua
+
+7. Tạo lại chức năng hiển thị book mới
++ Chỉnh sửa router để trang chủ là trang hiển thị books
+Đầu tiên ta vào /config/routes.php và thêm vào: 
+// Với định nghĩa này thì nó sẽ mặc định root sẽ đi vào controller books tại action index.
+Router::connect('/' , array('controller' => 'books' , 'action' => 'index'));
 
