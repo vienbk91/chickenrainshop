@@ -13,7 +13,7 @@ class BooksController extends AppController {
 	
     /**
      * Index method
-     *
+     * Hiển thị 10 quyển sách mới nhất trên trang chủ
      * @return \Cake\Network\Response|null
      */
     public function index() {
@@ -32,6 +32,32 @@ class BooksController extends AppController {
     	
     	$this->set(compact('books'));
     	
+	}
+	
+	/**
+	 * latestBooks method
+	 * Hiển thị tất cả các quyển sách và sắp xếp theo thứ tự từ mới đến cũ
+	 * Phân trang dữ liệu
+	 */
+	
+	public $paginate = array(
+			'order' => array('created' => 'desc') ,
+			'limit' => 5
+	);
+	
+	public function latestBooks() {
+		$this->paginate = array(
+				'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+				'order' => ['created' => 'desc'] ,
+				'limit' => 5 , 
+				'contain' => ['Writers' => function($q) {
+    						return $q->select(['name' , 'slug']);
+    					} ] ,
+    			'conditions' => ['published' => 1]
+		);
+		
+		$books = $this->paginate();
+		$this->set(compact('books'));
 	}
 
     /**
@@ -122,4 +148,7 @@ class BooksController extends AppController {
 
         return $this->redirect(['action' => 'index']);
     }
+    
+    
+    
 }

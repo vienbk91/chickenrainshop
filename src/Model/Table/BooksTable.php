@@ -131,13 +131,22 @@ class BooksTable extends Table
         return $rules;
     }
     
+    /**
+     * latest method
+     * Lấy ra 5 trường mới nhất trong bảng books
+     * @return \Cake\Datasource\ResultSetInterface
+     */
     public function latest() {
     	return $this->find()
     			->select(['id' ,'title' , 'image' , 'sale_price' , 'slug'])
     			->where(['published' => 1])
     			->order(['created' => 'desc'])
-    			->limit(10)
-    			->contain(['Writers'])
+    			->limit(5)
+    			->contain([
+    					'Writers' => function($q) {
+    						return $q->select(['name']);
+    					}
+    			])
     			->all();
     }
 }

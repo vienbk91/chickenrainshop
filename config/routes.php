@@ -43,8 +43,11 @@ use Cake\Routing\Route\DashedRoute;
  */
 Router::defaultRouteClass(DashedRoute::class);
 
-Router::connect('/' , array('controller' => 'books' , 'action' => 'index'));
-
+Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
+/**
+ * action từ 3.x trở lên phải để thành 1 chuỗi liền , ko có '_' hay kí tự đặc biệt
+ * */
+Router::connect('/sachmoi' , array('controller' => 'Books' , 'action' => 'latestBooks'));
 
 Router::scope('/', function (RouteBuilder $routes) {
     /**

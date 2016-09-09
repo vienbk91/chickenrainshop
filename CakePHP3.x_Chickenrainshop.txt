@@ -336,3 +336,43 @@ Bài này tạm thời bỏ qua
 // Với định nghĩa này thì nó sẽ mặc định root sẽ đi vào controller books tại action index.
 Router::connect('/' , array('controller' => 'books' , 'action' => 'index'));
 
++ Viết lại Controller
+
++ Viết lại Template/Books/index.ctp
+
+
+Vấn đề: Khi sử dụng 'contain' thì viết truy vấn 
+'contain' => ['Writers' => ['fields' => 'name']]
+sẽ không thể thực thi mà ta cần sử dụng callback như sau:
+->contain([
+        'Writers' => function($q) {
+            return $q->select(['name']);
+        }
+])
+
++ Tách xử lý với Model thành 1 method riêng
+
+
+7. Phân trang dữ liệu trong CakePHP
+
+Hiện tại ta chỉ show ra 5 books mới nhất trong database, vậy nếu muốn xem tất cả sách
+nhưng không phải hiển thị thành 1 danh sách toàn bộ dữ liệu như hiện tại thì ta cần sử dụng phân
+trang trong CakePHP. Cake đã hỗ trợ việc phân trang này
+
+Tạo 1 link xem dữ liệu mới:
++ Bổ sung link vào Template/Books/index.ctp
+<h4><?php echo $this->Html->link('Xem thêm' , '/sachmoi/') ?></h4>
+vào ngay phía dưới tiêu đề của trang index.ctp
+
+Như vậy ta đã tạo thêm 1 phần mới dùng để hiển thị sách dưới dạng phân trang.
+Trước hết ta sẽ khai báo router cho nó như sau:
++ Bổ sung router
+Router::connect('/sachmoi' , array('controller' => 'books' , 'action' => 'latest_books'));
++ Thêm action trong BooksController
+Do trong trang latest_books ta sẽ phân trang dữ liệu nên việc sử dụng lại hàm latest() trong BooksTable
+là không phù hợp. Và ta cũng sẽ không thể find() dữ liệu trực tiếp ra view được.
+
+Ở đây ta sẽ sử dụng hàm paginate()
+
+
++ Thêm view mới Template/Books/latest_books.ctp (tên view phải tương ứng tên action)
