@@ -4,7 +4,7 @@
 
 Phần 1: Các thiết lập ban đầu
 
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 1. Phân tích yêu cầu: 
 Chickenrainshop là dự án triển khai hệ thống bán sách online được xây dựng bằng CakePHP3.3
 Nó bao gồm 3 phần chính: 
@@ -16,7 +16,7 @@ Ngoài ra chức năng admin sẽ được sử dụng để quản lý sách.
 
 
 
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 2. Xây dựng mô hình dữ liệu và csdl cho project 
 
 CDM: Conceptual Data Model (Mô hình dữ liệu quan niệm hay mô hình quan niệm thực thể): 
@@ -47,7 +47,7 @@ Và 2 trường này dùng để lưu ngày tạo mẩu tin (created), và ngày
 (updated) một cách tự động, và chúng ta không cần phải thao tác gì trên đó cả.
 
 
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 3. Xây dựng Model - View - Controller từ csdl đã có
 
 1.1. Cài đặt componer với Xampp
@@ -150,7 +150,7 @@ Tuy nhiên chuyển sang CakePHP3.x thì nó có cách viết khá lạ
 Vậy cách này thì có gì khác cách trên ? Thực ra là không khác gì nhau cả, cách viết này
 là một dạng short_open_tag (bạn có thể đọc về echo trong php để tìm hiểu về cách viết này)
 
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 Phần 2: Quản lý nội dung
 4. Các phương pháp truy vấn dữ liệu trong CakePHP
 
@@ -181,6 +181,8 @@ Tương tự như câu lệnh where trong query, và các điều kiện cũng �
 Và có 4 mức recursive cho chúng ta tùy chọn là : -1 , 0 , 1 và 2
 
 VD: //Cakephp2.x
+<?php
+/*中断*/ 
 $notes = $this->Note->find('all' , array(
     'fields' => array('id' , 'title' , 'content') ,
     'conditions' => array('title LIKE' => '%PHP%') ,
@@ -189,6 +191,8 @@ $notes = $this->Note->find('all' , array(
 ));
 
 $notes = $this->Note->find('first');
+
+?>
 
 Trong cakephp2.x thì việc sử dụng find($type , $option) sẽ không có vấn đề gì xảy ra nhưng
 từ cakephp3.x trở đi, nó đã được thay thế khá nhiều.
@@ -200,17 +204,20 @@ Trong cakephp3.x document, hàm find() cũng được support nhưng đã có nh
 Do từ 3.x trở đi, cake không sử dụng trực tiếp 1 class Model mà thông qua 2 class Table và Modify nên
 khi sử dụng ta cần tạo ra 1 instance của Table.
 Vì thế trước khi sử dụng hàm find() này, ta cần load instance của Table bằng cách:
-
+<?php 
 $instance_tbl = TableRegistry::get('table_name');
 $result = $instance_tbl->find('all' , $option)->type_name();
+?>
 
 Trong cakephp3.x thì những $type = 'first' , 'count' sẽ không còn sử dụng được nữa , mà thay vào đó
 ta sẽ chỉ sử dụng $type = 'all' với $option , sau đó lấy kết quả thu được gọi tới first() , count()
 VD:
+<?php 
 $noteInstance = TableRegistry::get('Notes');
 $notes = $noteInstance->find('all');
-$first = $notes->first(); // $note->find()->first();
-$count = $notes->count(); // $note->find()->count();
+$first = $notes->first(); // $note->find()->first(); cũng hoạt động tương tự
+$count = $notes->count(); // $note->find()->count(); cũng hoạt động tương tự
+?>
 
 Về find list thì ta vẫn có thể sử dụng nó như 1 $type đặt trong find() được
 $bookInstance->find('list' , $option);
@@ -222,6 +229,7 @@ Trong cakephp3.x thì recursive đã được loại bỏ mà thay vào đó ch�
 Đối với find('neghbors') thì trong CakePHP3.x đã không còn hỗ trợ nó nữa, nên nếu muốn sử dụng bạn có thể
 biến tấu nó theo cách sau:
 src/Models/Table/ExampleTable.php
+<?php 
 /**
  * Find an item from a table by slug, along with it's two adjacent items
  *
@@ -249,10 +257,14 @@ public function neighbours(Query $query , $slug) {
         'next' => $next
     ];
 }
+?>
+
 src/Controller/ExamplesController.php
+<?php 
 public function view($id = null) {
     $neighbors = $this->Examples->find('neighbors', $id );
 }
+?>
 
 Ngoài ra thì ta có thể sử dụng thêm 1 số cách truy vấn khác cũng với find() như sau:
 $instance->find()
@@ -284,16 +296,16 @@ Tuy nhiên trong CakePHP3.x thì cách này đã không còn được sử dụn
 mà thay vào đó ta phải dùng như sau:
 
 use Cake\Datasource\ConnectionManager;
-
+<?php 
 $sql = 'SELECT * FROM articles';
 $connection = ConnectionManager::get('my_connection')->execute($sql);
 // Get one row
 $results = $connection->fetch('assoc');
 // Get all row
 $results = $connection->fetchAll('assoc');
+?>
 
-
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 5. Quan hệ giữa các Model trong CakePHP
 Các mối quan hệ trong CakePHP
 Quan hệ 1-1: 1 thể hiện của A chỉ có thể có 1 thể hiện của B và ngược lại, 1 thể hiện của B
@@ -305,31 +317,34 @@ thuộc về 1 thể hiện của A
               A           ----(có thể có 1 hoặc nhiều)---->      B
            (hasMany)      <---(     chỉ thuộc về     )----   (belongTo)
 Quan hệ n-n: 1 thể hiện của A có thể có 1 hoặc nhiều thể hiện của A và ngược lại.
-              A           <-----(  có 1 hoặc nhiều   )---->      B
+              A           <---(  có 1 hoặc nhiều     )---->      B
            (belongsToMany)                                   (belongsToMany)
 
 Ta có thể xem về việc định nghĩa các mối quan hệ này trong các Table Object:
 Trong BooksTable ta thấy định nghĩa:
-        // 1 Book thì chỉ thuộc về 1 Categories
-        $this->belongsTo('Categories', [
-            'foreignKey' => 'category_id'
-        ]);
-        // 1 book thì có thể có 1 hoặc nhiều Comments
-        $this->hasMany('Comments', [
-            'foreignKey' => 'book_id'
-        ]);
-        // Một Book có thể có 1 hoặc nhiều người viết và 1 người có thể viết 1 hoặc nhiều sách
-        // Ta cũng sẽ thấy 1 định nghĩa tương tự trong WritersTable Object
-        $this->belongsToMany('Writers', [
-            'foreignKey' => 'book_id',
-            'targetForeignKey' => 'writer_id',
-            'joinTable' => 'books_writers'
-        ]);
+<?php
+    // 1 Book thì chỉ thuộc về 1 Categories
+    $this->belongsTo('Categories', [
+        'foreignKey' => 'category_id'
+    ]);
+    // 1 book thì có thể có 1 hoặc nhiều Comments
+    $this->hasMany('Comments', [
+        'foreignKey' => 'book_id'
+    ]);
+    // Một Book có thể có 1 hoặc nhiều người viết và 1 người có thể viết 1 hoặc nhiều sách
+    // Ta cũng sẽ thấy 1 định nghĩa tương tự trong WritersTable Object
+    $this->belongsToMany('Writers', [
+        'foreignKey' => 'book_id',
+        'targetForeignKey' => 'writer_id',
+        'joinTable' => 'books_writers'
+    ]);
+?>
 
-
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 6. Sử dụng Containable Behavior
-Bài này tạm thời bỏ qua
+Bài này tạm thời bỏ qua , vì trong cakephp2.x thì nó được support nhưng trong các phiên bản cakephp3.x thì nó đã được xóa bỏ.
 
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 7. Tạo lại chức năng hiển thị book mới
 + Chỉnh sửa router để trang chủ là trang hiển thị books
 Đầu tiên ta vào /config/routes.php và thêm vào: 
@@ -340,6 +355,7 @@ Router::connect('/' , array('controller' => 'books' , 'action' => 'index'));
 
 + Viết lại Template/Books/index.ctp
 
+Theo hướng dẫn thì 'contain' => ['Writers' , ['fields']]
 
 Vấn đề: Khi sử dụng 'contain' thì viết truy vấn 
 'contain' => ['Writers' => ['fields' => 'name']]
@@ -350,10 +366,72 @@ sẽ không thể thực thi mà ta cần sử dụng callback như sau:
         }
 ])
 
+<?php 
+/**
+ * Index method
+ * Hiển thị 10 quyển sách mới nhất trên trang chủ
+ * @return \Cake\Network\Response|null
+ */
+public function index() {
+
+    $bookInstance = TableRegistry::get('Books');
+    $books = $bookInstance->find()
+            ->select(['id' ,'title' , 'image' , 'sale_price' , 'slug'])
+            ->where(['published' => 1])
+            ->order(['created' => 'desc'])
+            ->limit(5)
+            ->contain([
+                    'Writers' => function($q) {
+                        return $q->select(['name']);
+                    }
+            ])
+            ->all();
+
+    $this->set(compact('books'));
+    
+}
+?>
+
 + Tách xử lý với Model thành 1 method riêng
 
+Ta có thể viết trực tiếp hàm find() trong Controller , tuy nhiên việc viết mã xử lý database trong controller sẽ làm cho mã nguồn trở lên không được sạch và khó quản lý (Mọi xử lý liên quan tới database thì nên đặt trong model ). Vì vậy ta sẽ tách nó thành 1 method riêng trong Model như sau: 
 
-7. Phân trang dữ liệu trong CakePHP
+/src/Controller/BooksController.php 
+<?php 
+public function index() {
+      
+    $bookInstance = TableRegistry::get('Books');
+    // Tạo 1 hàm latest() trong model thực thi việc lấy ra 5 cuốn sách mới nhất trong csdl
+    $books = $bookInstance->latest();
+    
+    $this->set(compact('books'));
+    
+}
+?>
+
+/src/Model/Table/BooksTable.php
+<?php 
+/**
+* latest method
+* Lấy ra 5 trường mới nhất trong bảng books
+* @return \Cake\Datasource\ResultSetInterface
+*/
+public function latest() {
+        return $this->find()
+            ->select(['id' ,'title' , 'image' , 'sale_price' , 'slug'])
+            ->where(['published' => 1])
+            ->order(['created' => 'desc'])
+            ->limit(5)
+            ->contain([
+                    'Writers' => function($q) {
+                        return $q->select(['name']);
+                    }
+            ])
+            ->all();
+}
+?>
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+8. Phân trang dữ liệu trong CakePHP
 
 Hiện tại ta chỉ show ra 5 books mới nhất trong database, vậy nếu muốn xem tất cả sách
 nhưng không phải hiển thị thành 1 danh sách toàn bộ dữ liệu như hiện tại thì ta cần sử dụng phân
@@ -367,12 +445,129 @@ vào ngay phía dưới tiêu đề của trang index.ctp
 Như vậy ta đã tạo thêm 1 phần mới dùng để hiển thị sách dưới dạng phân trang.
 Trước hết ta sẽ khai báo router cho nó như sau:
 + Bổ sung router
-Router::connect('/sachmoi' , array('controller' => 'books' , 'action' => 'latest_books'));
-+ Thêm action trong BooksController
-Do trong trang latest_books ta sẽ phân trang dữ liệu nên việc sử dụng lại hàm latest() trong BooksTable
-là không phù hợp. Và ta cũng sẽ không thể find() dữ liệu trực tiếp ra view được.
+<?php 
+Router::connect('/sachmoi' , array('controller' => 'Books' , 'action' => 'latest_books'));
+?>
 
-Ở đây ta sẽ sử dụng hàm paginate()
++ Thêm action trong BooksController
+Do trong trang latest_books ta sẽ phân trang dữ liệu nên việc sử dụng lại hàm latest() trong BooksTable là không phù hợp (vì hàm này chỉ thực thi việc lấy ra toàn bộ dữ liệu theo yêu cầu được thực thi bởi hàm find() chứ không thực thi việc phân trang) . Và ta cũng không thể sử dụng find() để thực thi việc phân trang được. 
+
+Thì ở đây, cake đã hỗ trợ chúng ta sử dụng thành phần helper Paginator (trong các phiên bản 2.x thì khi muốn sử dụng helper này ta cần khai báo nó thông qua mã lệnh: 
+<?php 
+public $helper = array('Paginator');
+?>
+nhưng từ các phiên bản 3.x trở đi thì nó đã được khai báo như 1 thành phần mặc định của class Controller nên ta chỉ việc sử dụng mà không cần phải khai báo gì cả. )
+
+Trong cakephp nó hỗ trợ 1 phương thức thực thi việc phân trang dữ liệu đó là paginate(). Phương thức này được khai báo trong PaginatorComponent. Ngoài ra thì điều kiện phân trang sẽ được sử dụng thông qua 1 biến điều khiển mặc định có tên là $paginate , cho nên mọi mong muốn phân trang sẽ được khai báo và cake sẽ xử lý thông qua nó. Nếu không có khai báo gì thì $paginate sẽ nhận giá trị mặc định được khai báo trong PaginatorComponent.
+
+
+Ở đây ta sẽ sử dụng hàm paginate() như sau: 
+<?php
+public $paginate = array(
+        'order' => array('created' => 'desc') ,
+        'limit' => 5
+);
+
+/* Ta bắt buộc phải viết tên hàm thành latestBooks chứ không phải là latest_books() như trong cake2.x */
+public function latestBooks() {
+    /* Nếu ta khai báo $paginate bên trong action thì mọi khai báo của $paginate trước đó sẽ được vô hiệu hóa và sử dụng khai báo này. Còn nếu không thì nó sẽ sử dụng $paginate được khai báo bên ngoài , cuối cùng mới sử dụng các thiết lập mặc định. */
+    /* $paginate có độ ưu tiên cao nhất */
+    $this->paginate = array(
+            'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+            'order' => ['created' => 'desc'] ,
+            'limit' => 5 , 
+            'contain' => ['Writers' => function($q) {
+                        return $q->select(['name' , 'slug']);
+                    } ] ,
+            'conditions' => ['published' => 1]
+    );
+    
+    /* Ngoài việc đưa ra các dữ liệu được truy vấn thì nó còn đưa thêm các thông tin thực thi việc phân trang.  */
+    $books = $this->paginate();
+    $this->set(compact('books'));
+}
+?>
 
 
 + Thêm view mới Template/Books/latest_books.ctp (tên view phải tương ứng tên action)
+
+<h2><?php echo __('Sách mới'); ?></h2>
+<p>
+<!-- PaginatorHelper sẽ nhận định sort theo title , created -->
+<?php echo $this->Paginator->sort('title' , 'Sắp xếp theo tên sách'); ?> |
+<?php echo $this->Paginator->sort('created' , 'Sắp xếp mới nhất/cũ nhất'); ?>
+</p>
+<div class="books index large-9 medium-8 columns content">
+    <?php 
+    foreach ($books as $book) {
+        echo $book->title . "<br><br>";
+        /* Sử dụng HtmlHelper thay thế cho tag <img> */
+        echo $this->Html->image($book->image , array(
+                'width' => '120px' ,
+                'height' => '160px'
+        )) . "<br><br>";
+        /* Chuyển đổi tiền tệ */
+        echo "Giá bán: " . $this->Number->format($book->sale_price , array(
+                'places' => 0 ,
+                'after' => 'VND'
+        )) . "<br>";
+        echo "Tác giả: ";
+        foreach ($book->writers as $writer) { 
+            echo $writer->name . "   ";
+        }
+        echo "<hr>";
+    }
+    ?>
+    <p>
+    <!-- Trong cake hỗ trợ gọi tới 1 số thuộc tính được xây dựng sẵn như 
+    {{page}} để hiển thị trang hiện tại trong tổng số trang
+    {{pages}} để hiện thị tổng số trang phân trang
+    {{current}}: hiển thị số trang hiện tại
+    -->
+    <?php echo $this->Paginator->counter("Trang {{page}}/{{pages}}, hiển thị {{current}} quyển sách trong tổng số {{count}} quyển."); ?>
+    </p>
+    <ul class="pagination">
+        <?= $this->Paginator->prev('<i class="fa fa-fw fa-chevron-left">Quay lại</i>', ['escape' => false]) ?>
+        <?= $this->Paginator->numbers() ?>
+        <?= $this->Paginator->next('<i class="fa fa-fw fa-chevron-right">Kế tiếp</i>', ['escape' => false]) ?>
+    </ul>
+</div>
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+9. Element trong CakePHP
+
+Trong CakePHP có hỗ trợ sử dụng 1 thành phần gọi là Element. Vậy element này mục đích để làm gì ? Tại sao cần sử dụng element ? thì trong phần này ta sẽ đi nói rõ về nó.
+
+Trong source code của 1 hệ thống sẽ luôn có những phần code view được lặp đi lặp lại nhiều lần, và việc viết mã giành cho những phần này khi thay đổi ta sẽ phải sửa tương tự cho từng view, như vậy sẽ rất bất tiện và có thể gây ra nhiều nhầm lẫn. Vì thế mà element được ra đời. Element là phần mã view được sử dụng lặp đi lặp lại nhiều lần, nên ta chỉ việc tạo 1 file trong thư mục Template/Element/ thì cake sẽ hiểu và load file đó mỗi khi element được gọi. Như thế khi chỉnh sửa hoặc thay đổi ta cũng chỉ cần thay đổi 1 file element mà không cần chỉnh sửa từng view, thật tiện lợi phải không :)
+
+Ví dụ: Phần mã hiển thị việc phân trang sẽ không chỉ được viết ở trang chủ hiển thị sách, mà còn được viết ở rất nhiều trang khác như hiển thị danh sách tác giả, danh sách người dùng,...
+Như vậy việc tách nó ra thành 1 đối tượng element là hợp lý.
+Trong Template/Element/ ta tạo 1 file có tên: paginator.ctp (nó có đuôi ctp như những view khác sử dụng trong cake) với nội dung như sau: 
+
+<?php echo $this->Paginator->counter("Trang {{page}}/{{pages}}, hiển thị {{current}} quyển sách trong tổng số {{count}} quyển."); ?>
+</p>
+    <ul class="pagination">
+        <?= $this->Paginator->prev('<i class="fa fa-fw fa-chevron-left">Quay lại</i>', ['escape' => false]) ?>
+        <?= $this->Paginator->numbers() ?>
+        <?= $this->Paginator->next('<i class="fa fa-fw fa-chevron-right">Kế tiếp</i>', ['escape' => false]) ?>
+</ul>
+
+Như vậy trong trang /Template/Books/latest_books.ctp ta chỉ việc gọi đến đối tượng element này như sau:
+<?php echo $this->element('paginator'); ?>
+
+Tuy nhiên, nếu ta đặt nội dung paginator.ctp như trên thì trong phần hiển thị view của writers nó cũng sẽ hiển thị là 'cuốn sách/quyển' thay vì 'tác giả/tác giả'. Vậy làm thế nào để ta có thể điều khiển được điều này.
+
+Trong file paginator.ctp , thay vì cố định các giá trị như 'cuốn sách/quyển' hay 'tác giả/tác giả' thì ta sẽ thay thế nó bằng 1 biến, giả sử là biến $object và sử dụng chức năng nối chuỗi trong php như sau: 
+
+<?php echo $this->Paginator->counter("Trang {{page}}/{{pages}}, hiển thị {{current}} " . $object . " trong tổng số {{count}} ". $object ."."); ?>
+
+Và khi gọi đến element paginator này ta sẽ gán thêm giá trị cho biến $object như sau:
+/Template/Books/latest_books.ctp 
+<?php echo $this->element('paginator' , array('object' => 'tác giả')); ?>
+/Template/Writers/index.ctp
+<?php echo $this->element('paginator' , array('object' => 'cuốn sách')); ?>
+
+Ở đây ta gán biến object là 1 key trong danh sách các option của element, cake sẽ tự động hiểu và thay thế giá trị tương ứng cho nó.
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+10. Tạo link thân thiện trong CakePHP

@@ -72,4 +72,14 @@ class WritersTable extends Table
 
         return $validator;
     }
+
+    /**
+     * Lấy ra tất cả các tác giả
+     */
+    public function getWriters() {
+        return $this->find()
+                ->select(['id' , 'name' , 'slug'])
+                ->order(['name' => 'asc'])
+                ->all();
+    }
 }

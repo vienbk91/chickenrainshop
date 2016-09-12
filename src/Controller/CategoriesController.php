@@ -16,8 +16,7 @@ class CategoriesController extends AppController
      *
      * @return \Cake\Network\Response|null
      */
-    public function index()
-    {
+    public function index() {
         $categories = $this->paginate($this->Categories);
 
         $this->set(compact('categories'));
@@ -31,11 +30,18 @@ class CategoriesController extends AppController
      * @return \Cake\Network\Response|null
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
-    public function view($id = null)
-    {
+    public function view($slug = null) {
+    	
+    	/*
         $category = $this->Categories->get($id, [
             'contain' => ['Books']
         ]);
+        */
+    	
+    	$category = $this->Categories->find()
+    								->where(['Categories.slug' => $slug])
+    								->contain(['Books'])
+    								->first();
 
         $this->set('category', $category);
         $this->set('_serialize', ['category']);

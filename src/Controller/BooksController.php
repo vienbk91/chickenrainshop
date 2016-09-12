@@ -3,6 +3,8 @@ namespace App\Controller;
 
 use App\Controller\AppController;
 use Cake\ORM\TableRegistry;
+use Cake\Network\Exception\NotFoundException;
+use Cake\ORM\Query;
 
 /**
  * Books Controller
@@ -62,16 +64,35 @@ class BooksController extends AppController {
 
     /**
      * View method
-     *
-     * @param string|null $id Book id.
+     * Hiển thị nội dung của từng quyển sách
+     * @param string|null $slug Book slug.
      * @return \Cake\Network\Response|null
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
-    public function view($id = null)
-    {
+    public function view($slug = null) {
+    	/*
+        $option = array(
+                'conditions' => ['slug' => $slug]
+            );
+        $book = $this->Books->find('all' , $option)->first();
+        */
+    	
+    	$book = $this->Books->find('all')
+							->where(['Books.slug' => $slug])
+    						->contain(['Categories', 'Writers', 'Comments'])
+    						//->autoFields(false)
+    						->first();
+    	
+        if (empty($book)) {
+            throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
+        }
+        
+        /*
         $book = $this->Books->get($id, [
             'contain' => ['Categories', 'Writers', 'Comments']
         ]);
+        */
+
 
         $this->set('book', $book);
         $this->set('_serialize', ['book']);
@@ -79,7 +100,7 @@ class BooksController extends AppController {
 
     /**
      * Add method
-     *
+     * Thêm sách
      * @return \Cake\Network\Response|void Redirects on successful add, renders view otherwise.
      */
     public function add()

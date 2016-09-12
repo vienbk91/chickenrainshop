@@ -43,11 +43,22 @@ use Cake\Routing\Route\DashedRoute;
  */
 Router::defaultRouteClass(DashedRoute::class);
 
-Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
 /**
- * action từ 3.x trở lên phải để thành 1 chuỗi liền , ko có '_' hay kí tự đặc biệt
- * */
-Router::connect('/sachmoi' , array('controller' => 'Books' , 'action' => 'latestBooks'));
+ * Create by vienbk91 
+ * Tạo router mới cho chickenrainshop
+ */
+Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
+
+Router::connect('/sachmoi' , array('controller' => 'Books' , 'action' => 'latest_books'));
+Router::connect('/:book_title'  , array('controller' => 'Books' , 'action' => 'view') , array('pass' => 'book_title'));
+
+Router::connect('/tac-gia'  , array('controller' => 'Writers' , 'action' => 'index'));
+Router::connect('/:writer_title'  , array('controller' => 'Writers' , 'action' => 'view') , array('pass' => 'writer_title'));
+
+Router::connect('/danh-muc'  , array('controller' => 'Categories' , 'action' => 'index'));
+Router::connect('/:category_title'  , array('controller' => 'Categories' , 'action' => 'view') , array('pass' => 'category_title'));
+
+
 
 Router::scope('/', function (RouteBuilder $routes) {
     /**

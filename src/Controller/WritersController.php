@@ -8,20 +8,25 @@ use App\Controller\AppController;
  *
  * @property \App\Model\Table\WritersTable $Writers
  */
-class WritersController extends AppController
-{
+class WritersController extends AppController {
 
     /**
      * Index method
-     *
+     * Hiển thị danh sách tác giả được phân trang
      * @return \Cake\Network\Response|null
      */
-    public function index()
-    {
-        $writers = $this->paginate($this->Writers);
-
-        $this->set(compact('writers'));
-        $this->set('_serialize', ['writers']);
+    public $paginate = array();
+    public function index() {
+        /* Khởi tạo biến $prigate  */
+    	$this->paginate = array(
+    			'fields' => ['id' , 'name'] ,
+    			'order' => ['name' => 'asc'] ,
+    			'limit' => 5
+    	);
+    	
+    	$writers = $this->paginate();
+    	$this->set(compact('writers'));
+    	
     }
 
     /**
@@ -31,8 +36,7 @@ class WritersController extends AppController
      * @return \Cake\Network\Response|null
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
-    public function view($id = null)
-    {
+    public function view($id = null) {
         $writer = $this->Writers->get($id, [
             'contain' => ['Books']
         ]);
