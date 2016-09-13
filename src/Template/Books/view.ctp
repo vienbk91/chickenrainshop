@@ -126,7 +126,7 @@
                 <td><?= h($writers->biography) ?></td>
                 <td><?= h($writers->created) ?></td>
                 <td class="actions">
-                    <?= $this->Html->link(__('View'), ['controller' => 'Writers', 'action' => 'view', $writers->id]) ?>
+                    <?= $this->Html->link(__('View'), ['controller' => 'Writers', 'action' => 'view', $writers->slug]) ?>
                     <?= $this->Html->link(__('Edit'), ['controller' => 'Writers', 'action' => 'edit', $writers->id]) ?>
                     <?= $this->Form->postLink(__('Delete'), ['controller' => 'Writers', 'action' => 'delete', $writers->id], ['confirm' => __('Are you sure you want to delete # {0}?', $writers->id)]) ?>
                 </td>

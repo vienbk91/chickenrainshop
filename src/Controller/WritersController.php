@@ -36,13 +36,43 @@ class WritersController extends AppController {
      * @return \Cake\Network\Response|null
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
-    public function view($id = null) {
-        $writer = $this->Writers->get($id, [
-            'contain' => ['Books']
-        ]);
+    public function view($slug = null) {
+
+    	$writer = $this->Writers->find('all')
+							->where(['Writers.slug' => $slug])
+							->contain(['Books'])
+							->autoFields(false)
+							->first();
 
         $this->set('writer', $writer);
         $this->set('_serialize', ['writer']);
+
+        $this->paginate = array(
+            'books' => array(
+                'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+                'order' => ['created' => 'desc'] ,
+                'limit' => 5 , 
+                'contain' => array(
+                    'Writers' => function(\Cake\ORM\Query $q) {
+                            return $q->select(['name' , 'slug']);
+                    } 
+                ) ,
+                
+               'joins' => array(
+                    array('type' => 'LEFT', 'alias' => 'BooksWriters', 'table' => 'books_writers' , 'conditions' => 'BooksWriters.book_id = Books.id') ,
+                    array('type' => 'LEFT', 'alias' => 'Writers', 'table' => 'writers' , 'conditions' => 'Writers.id = BooksWriters.writer_id')
+                ) ,
+                'conditions' => array(
+                    'Books.published' => 1 , 
+                    'Writers.slug' => $slug
+                )
+            )
+        );
+        
+        // Nếu để trống thì nó mặc định lấy controller của model hiện tại
+        // Nên cần khai báo model muốn sử dụng
+        $books = $this->paginate('Books');
+        $this->set(compact('books'));
     }
 
     /**
@@ -50,8 +80,7 @@ class WritersController extends AppController {
      *
      * @return \Cake\Network\Response|void Redirects on successful add, renders view otherwise.
      */
-    public function add()
-    {
+    public function add() {
         $writer = $this->Writers->newEntity();
         if ($this->request->is('post')) {
             $writer = $this->Writers->patchEntity($writer, $this->request->data);

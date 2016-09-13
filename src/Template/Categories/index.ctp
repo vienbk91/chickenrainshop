@@ -26,7 +26,7 @@
                 <td><?= h($category->slug) ?></td>
                 <td><?= h($category->created) ?></td>
                 <td class="actions">
-                    <?= $this->Html->link(__('View'), ['action' => 'view', $category->id]) ?>
+                    <?= $this->Html->link(__('View'), ['action' => 'view', $category->slug]) ?>
                     <?= $this->Html->link(__('Edit'), ['action' => 'edit', $category->id]) ?>
                     <?= $this->Form->postLink(__('Delete'), ['action' => 'delete', $category->id], ['confirm' => __('Are you sure you want to delete # {0}?', $category->id)]) ?>
                 </td>

@@ -4,8 +4,6 @@ namespace App\Controller;
 use App\Controller\AppController;
 use Cake\ORM\TableRegistry;
 use Cake\Network\Exception\NotFoundException;
-use Cake\ORM\Query;
-
 /**
  * Books Controller
  *
@@ -15,23 +13,12 @@ class BooksController extends AppController {
 	
     /**
      * Index method
-     * Hiển thị 10 quyển sách mới nhất trên trang chủ
+     * Hiển thị 5 quyển sách mới nhất trên trang chủ
      * @return \Cake\Network\Response|null
      */
     public function index() {
-    	/*
-        $this->paginate = [
-            'contain' => ['Categories']
-        ];
-        $books = $this->paginate($this->Books);
-
-        $this->set(compact('books'));
-        $this->set('_serialize', ['books']);
-		*/
     	
-    	$bookInstance = TableRegistry::get('Books');
-    	$books = $bookInstance->latest();
-    	
+    	$books = $this->Books->latest();
     	$this->set(compact('books'));
     	
 	}
@@ -70,29 +57,22 @@ class BooksController extends AppController {
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function view($slug = null) {
-    	/*
-        $option = array(
-                'conditions' => ['slug' => $slug]
-            );
-        $book = $this->Books->find('all' , $option)->first();
-        */
+ 
+//         $option = array(
+//                 'conditions' => ['slug' => $slug]
+//             );
+//         $book = $this->Books->find('all' , $option)->first();
+        
     	
     	$book = $this->Books->find('all')
 							->where(['Books.slug' => $slug])
     						->contain(['Categories', 'Writers', 'Comments'])
-    						//->autoFields(false)
+    						->autoFields(false)
     						->first();
     	
         if (empty($book)) {
             throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
         }
-        
-        /*
-        $book = $this->Books->get($id, [
-            'contain' => ['Categories', 'Writers', 'Comments']
-        ]);
-        */
-
 
         $this->set('book', $book);
         $this->set('_serialize', ['book']);

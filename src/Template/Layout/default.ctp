@@ -13,7 +13,7 @@
  * @license       http://www.opensource.org/licenses/mit-license.php MIT License
  */
 
-$cakeDescription = 'ヴィエンの個人ページ';
+$cakeDescription = 'Chickenrain-shopホームページ';
 ?>
 <!DOCTYPE html>
 <html>
@@ -40,7 +40,7 @@ $cakeDescription = 'ヴィエンの個人ページ';
             <!-- 
                 <h1><a href=""><?php echo $this->fetch('title'); ?></a></h1>
              -->
-                <h1><?php echo $this->Html->link($cakeDescription, 'https://github.com/vienbk91/' , array('target' => '_blank')); ?></h1>
+                <h1><?php echo $this->Html->link($cakeDescription, 'http://localhost/chickenrainshop/' , array('target' => '_self')); ?></h1>
             </li>
         </ul>
         <!-- 

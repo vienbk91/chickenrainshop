@@ -1,7 +1,6 @@
 <?php 
     foreach ($books as $book) {
-    	echo $book->title . "<br>";
-        echo $this->Html->link('Xem thêm nội dung sách' , '/books/view/' . $book->slug , array('target' => '_self')) . "<br><br>";
+        echo $this->Html->link($book->title , '/sach-moi/' . $book->slug , array('target' => '_self')) . "<br>";
     	echo $this->Html->image($book->image , array(
     			'width' => '120px' ,
     			'height' => '160px'

@@ -49,14 +49,14 @@ Router::defaultRouteClass(DashedRoute::class);
  */
 Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
 
-Router::connect('/sachmoi' , array('controller' => 'Books' , 'action' => 'latest_books'));
-Router::connect('/:book_title'  , array('controller' => 'Books' , 'action' => 'view') , array('pass' => 'book_title'));
+Router::connect('/sach-moi' , array('controller' => 'Books' , 'action' => 'latest_books'));
+Router::connect('/sach-moi/:book_title', array('controller' => 'Books' , 'action' => 'view') , array('pass' => array('book_title')));
 
 Router::connect('/tac-gia'  , array('controller' => 'Writers' , 'action' => 'index'));
-Router::connect('/:writer_title'  , array('controller' => 'Writers' , 'action' => 'view') , array('pass' => 'writer_title'));
+Router::connect('/tac-gia/:writer_title'  , array('controller' => 'Writers' , 'action' => 'view') , array('pass' => array('writer_title')));
 
 Router::connect('/danh-muc'  , array('controller' => 'Categories' , 'action' => 'index'));
-Router::connect('/:category_title'  , array('controller' => 'Categories' , 'action' => 'view') , array('pass' => 'category_title'));
+Router::connect('/danh-muc/:category_title'  , array('controller' => 'Categories' , 'action' => 'view') , array('pass' => array('category_title')));
 
 
 
@@ -72,7 +72,7 @@ Router::scope('/', function (RouteBuilder $routes) {
      * ...and connect the rest of 'Pages' controller's URLs.
      */
     $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
-
+    
     /**
      * Connect catchall routes for all controllers.
      *

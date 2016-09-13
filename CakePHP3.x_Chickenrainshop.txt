@@ -571,3 +571,16 @@ Và khi gọi đến element paginator này ta sẽ gán thêm giá trị cho bi
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 10. Tạo link thân thiện trong CakePHP
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+11. Phân trang dữ liệu quan hệ
+
+Sau khi đã tạo link thân thiện với các phần như 
++ books => sach-moi
++ categories => danh-muc
++ writers => tac-gia
+
+Bây giờ ta hãy xem trong phần view của category thì mỗi category lại tồn tại rất nhiều sách có quan hệ với nó, nên bây giờ thay vì hiển thị 1 danh sách dài các books đó thì ta cũng sẽ thực hiện phân trang cho nó
+
+vd: http://localhost/chickenrainshop/danh-muc/kinh-te -> Tất cả các sách thuộc danh mục "kinh tế" sẽ được liệt kê tại đây, nên bây giờ ta sẽ đi phân trang cho nó.
