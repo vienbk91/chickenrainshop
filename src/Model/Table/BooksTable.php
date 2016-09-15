@@ -51,7 +51,8 @@ class BooksTable extends Table
         $this->belongsToMany('Writers', [
             'foreignKey' => 'book_id',
             'targetForeignKey' => 'writer_id',
-            'joinTable' => 'books_writers'
+            'joinTable' => 'books_writers' ,
+        	'through' => 'BooksWriters'
         ]);
     }
 

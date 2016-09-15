@@ -3,7 +3,7 @@
 <div class="writers index large-9 medium-8 columns content">
 <?php 
 foreach($writers as $writer) {
-    echo $writer->name . "<br>";
+    echo $this->Html->link($writer->name , '/tac-gia/' . $writer->slug , array('target' => 'self')) . "<br>";
 }
 ?>
 <br><br>

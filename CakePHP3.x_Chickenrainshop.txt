@@ -572,6 +572,70 @@ Và khi gọi đến element paginator này ta sẽ gán thêm giá trị cho bi
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 10. Tạo link thân thiện trong CakePHP
 
+Ở đây thì application tự động sinh ra các link url theo mô hình
+localhost/project_name/controller_name/action_name/param1/param2/...
+http://localhost/chickenrainshop/books/view/1
+
+Tuy nhiên như thế thì nó sẽ không được đánh giá là 1 link thân thiện vị người dùng sẽ khó mà hiểu rõ mình đang thao tác đến đâu, cho đối tương nào
+nếu chỉ nhìn vào url. Vì vậy trong phần này ta sẽ tạo link thân thiện cho chickenrainshop
+Mô hình của link thân thiện đó là thay vì sử dụng param1 là id thì ta sẽ thay thế cụm /view/id thành /slug tương ứng
+(slug là 1 trường được tạo ra để tạo link thân thiện cho ứng dụng, là tên tiêu đề, tên sách, tên tác giả,... được viết thường, không dấu và có phân cách từ
+bằng ký tự '-' )
+vd: 
+http://localhost/chickenrainshop/sach-moi/toi-la-so-4 # Đây là link thân thiện của phần view thông tin books (sách) 
+http://localhost/chickenrainshop/tac-gia/h-j-alex # Đây là link thân thiện của phần view thông tin writers (tác giả)
+http://localhost/chickenrainshop/danh-muc/kinh-te # Đây là link thân thiện của phần view thông tin categories (thư mục)
+
+Việc tạo link thân thiện này khá đơn giản , trước hết trong view ta thay việc truyền vào id thành slug tương ứng 
+Ví dụ ta sẽ đi chỉnh sửa link thân thiện cho categories
+Từ trang index ta sẽ đi đến trang view thông qua action View được khai báo trong /Template/Categories/index.ctp
+<?= $this->Html->link(__('View'), ['action' => 'view', $category->id]) ?>
+Ta sẽ thay thế thành:
+<?= $this->Html->link(__('View'), ['action' => 'view', $category->slug]) ?>
+
+Sau đó ta sẽ xử lý việc truyền slug vào thay cho id trong CategoriesController
+<?php 
+public function view($slug = null) {
+    
+    // B1: Lấy thông tin category tương ứng với tham số slug nhận được từ url    
+    $options = array(
+            'conditions' => array('Categories.slug' => $slug) ,
+            'contain' => array('Books')
+    );
+
+    $category = $this->Categories->find('all' , $options)->first();
+    
+    if (empty($category)) {
+        throw new NotFoundException(__('Danh mục này không tồn tại!'));
+    }
+
+    $this->set('category', $category);
+    $this->set('_serialize', ['category']);
+}
+?>
+
+Tiếp theo ta thực hiện chỉnh sửa router của ứng dụng 
+/config/ratouers.php
+<?php 
+/**
+ * Create by vienbk91 
+ * Tạo router mới cho chickenrainshop
+ */
+Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
+
+Router::connect('/sach-moi' , array('controller' => 'Books' , 'action' => 'latest_books'));
+Router::connect('/sach-moi/:book_title', array('controller' => 'Books' , 'action' => 'view') , array('pass' => array('book_title')));
+
+Router::connect('/tac-gia'  , array('controller' => 'Writers' , 'action' => 'index'));
+Router::connect('/tac-gia/:writer_title'  , array('controller' => 'Writers' , 'action' => 'view') , array('pass' => array('writer_title')));
+
+Router::connect('/danh-muc'  , array('controller' => 'Categories' , 'action' => 'index'));
+Router::connect('/danh-muc/:category_title'  , array('controller' => 'Categories' , 'action' => 'view') , array('pass' => array('category_title')));
+
+?>
+
+Ta cũng làm tương tự như vậy với writers
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 11. Phân trang dữ liệu quan hệ
@@ -584,3 +648,318 @@ Sau khi đã tạo link thân thiện với các phần như
 Bây giờ ta hãy xem trong phần view của category thì mỗi category lại tồn tại rất nhiều sách có quan hệ với nó, nên bây giờ thay vì hiển thị 1 danh sách dài các books đó thì ta cũng sẽ thực hiện phân trang cho nó
 
 vd: http://localhost/chickenrainshop/danh-muc/kinh-te -> Tất cả các sách thuộc danh mục "kinh tế" sẽ được liệt kê tại đây, nên bây giờ ta sẽ đi phân trang cho nó.
+
+Phân trang dữ liệu sách trong Categories
+/src/Controller/CategoriesController.php 
+<?php 
+public function view($slug = null) {
+    
+    // B1: Lấy thông tin category tương ứng với tham số slug nhận được từ url    
+    $options = array(
+            'conditions' => array('Categories.slug' => $slug) ,
+            'contain' => array('Books')
+    );
+
+    $category = $this->Categories->find('all' , $options)->first();
+
+    if (empty($category)) {
+        throw new NotFoundException(__('Danh mục này không tồn tại!'));
+    }
+
+    $this->set('category', $category);
+    $this->set('_serialize', ['category']);
+
+    // Kết thúc B1
+
+    // B2: Lấy thông tin sách thuộc category này và thực hiện phân trang 
+    // Do 2 bảng categories và books có quan hệ 1-n và liên kết trực tiếp nên ta có thể thông qua contain để join 2 bảng với nhau
+    // Do đều sử dụng dữ liệu để phân trang cho nên ta có thể sử dụng hàm phân trang của book trong books controller
+    // Ta sẽ copy phần code phân trang của bookscontroller ra và sửa đổi.
+    $this->paginate = array(
+            'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+            'order' => ['created' => 'desc'] ,
+            'limit' => 5 , 
+            'contain' => [ 
+                        'Categories'  => function($q) {
+                                return $q->select(['slug']);
+                        } ,
+                        'Writers' => function($q) {
+                                return $q->select(['name' , 'slug']);
+                        } 
+                    ] ,
+            'conditions' => [
+                'published' => 1 ,
+                'Categories.slug' => $slug
+                ]
+    );
+    
+    // Nếu chỉ khai báo $this->paginate() thì nó mặc định lấy model của controller hiện tại đang xử lý
+    // Nên cần khai báo model cụ thể nếu muốn sử dụng
+    // Ở đây ta dùng bảng books để tìm kiếm data nên ta cần gọi đến Books model
+    $books = $this->paginate('Books');
+    $this->set(compact('books'));
+
+}
+?>
+
+/src/Template/Categories/view.ctp 
+<div class="categories view large-9 medium-8 columns content">
+    <h3><?= h($category->name) ?></h3>
+    <table class="vertical-table">
+        <tr>
+            <th scope="row"><?= __('Tên thư mục') ?></th>
+            <td><?= h($category->name) ?></td>
+        </tr>
+    </table>
+    <div class="row">
+        <h4><?= __('Tóm lược') ?></h4>
+        <?= $this->Text->autoParagraph(h($category->description)); ?>
+    </div>
+    
+    <!-- Thực thi phân trang dữ liệu sách cùng Categories START-->
+    
+    <div class="related">
+        <h4><?= __('Sách cùng thư mục') ?></h4>
+        <?php if (!empty($books)): ?>
+            <?php echo $this->element('books' , array('books' => $books)); ?>
+            <?php echo $this->element('paginator' , array('object' => 'quyển sách')); ?>
+        <?php endif; ?>
+    </div>
+    
+    <!-- Thực thi phân trang dữ liệu sách cùng Categories END -->
+    
+</div>
+
+
+
+Phân trang dữ liệu sách trong Writers
+Phần phân trang dữ liệu quan hệ này sẽ có 1 chút thay đổi vì trong phần này, ta sẽ phải phân trang dữ liệu books tương ứng với writers. Tuy nhiên 2 bảng này lại không có quan hệ trực tiếp với nhau
+mà thông qua 1 bảng trung gian books_writers.
+Theo hướng dẫn thì ta có thể sử dụng joins rồi tìm kiếm books theo conditions là Writers.slug = $slug (giá trị tham số nhận vào từ view)
+
+/src/Controller/WritersController.php
+<?php 
+public function view($slug = null) {
+
+    // Lấy toàn bộ thông tin của tác giả có slug tương ứng với param được truyền vào từ view
+    $writer = $this->Writers->find('all')
+                        ->where(['Writers.slug' => $slug])
+                        ->contain(['Books'])
+                        ->autoFields(false)
+                        ->first();
+
+    $this->set('writer', $writer);
+    // Đến đây là kết thúc phần lấy thông tin tác giả và hiển thị nó ra view theo mong muốn 
+    // Tiếp theo ta sẽ phải đi thực hiện việc phân trang dữ liệu sách do tác giả này viết ra thông qua slug của tác giả
+    // Không hiểu sao làm theo hướng dẫn nhưng không thực hiện được việc join 3 bảng với nhau và Writers.slug luôn được thông báo là không được xác định
+    
+    // Lấy ra tất cả các cuốn sách có slug tác giả là $slug
+    /**
+     * 
+     * Link tham khảo: http://stackoverflow.com/questions/29737422/conditions-to-paginate-for-belongstomany-cakephp-3 
+     */
+    $booksInstance = TableRegistry::get('books');
+    $books = $booksInstance->find()
+                        ->matching('Writers', function(\Cake\ORM\Query $q) use ( $slug ) {
+                                return $q->where([
+                                        'Writers.slug' => $slug
+                                ]);
+                            }
+                        );
+    
+    // Thêm điều kiện phân trang thông qua 1 biến toàn cục $paginate
+    $this->paginate = [
+            'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+            'order' =>  ['created' => 'desc'] , // Từ mới nhất đến cũ dần
+            'limit'=>2
+    ];
+    $this->set('books' , $this->paginate($books));
+    
+}
+?>
+
+/src/Template/Writers/view.ctp 
+<div class="writers view large-9 medium-8 columns content">
+    <h3><?= h($writer->name) ?></h3>
+    <table class="vertical-table">
+        <tr>
+            <th scope="row"><?= __('Tên tác giả') ?></th>
+            <td><?= h($writer->name) ?></td>
+        </tr>
+    </table>
+    <div class="row">
+        <h4><?= __('Tiểu sử') ?></h4>
+        <?= $this->Text->autoParagraph(h($writer->biography)); ?>
+    </div>
+    <div class="related">
+        <h4><?= __('Sách đã xuất bản') ?></h4>
+            <?php 
+                foreach ($books as $book) {
+                    echo $this->Html->link($book->title , '/sach-moi/' . $book->slug , array('target' => '_self')) . "<br>";
+                    echo $this->Html->image($book->image , array(
+                            'width' => '120px' ,
+                            'height' => '160px'
+                    )) . "<br><br>";
+                    echo "Giá bán: " . $this->Number->format($book->sale_price , array(
+                            'places' => 0 ,
+                            'after' => 'VND'
+                    )) . "<br>";
+                    echo "Tác giả: ";
+                    //foreach ($book->_machingData['Writers'] as $writer) { 
+                        echo $book->_matchingData['Writers']['name'] . "   ";
+                    //}
+                    echo "<hr>";
+                }
+            ?>
+            <?php echo $this->element('paginator' , array('object' => 'quyển sách')); ?>
+    </div>
+</div>
+
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+10. Hiển thị thông tin chi tiết của sách trên chickenrainshop
+
+Thay đổi nội dung trang thông tin chi tiết của sách, bằng cách bỏ đi 1 số nội dung hiển thị không cần thiết, 
+thay đổi nội dung phần comments và phần thông tin tác giả
+
+
+/src/Controller/BooksController.php
+
+<?php 
+public function view($slug = null) {
+
+    // Lấy thông tin của sách theo $slug nhận từ url
+    $book = $this->Books->find('all')
+                    ->where(['Books.slug' => $slug])
+                    ->contain([
+                            'Categories', 
+                            'Writers', 
+                            // Lấy thêm dữ liệu từ bảng Users
+                            'Comments' => function(\Cake\ORM\Query $q) {
+                                return $q->contain(['Users'])->select();
+                            }
+                    ])
+                    ->first();
+    
+    if (empty($book)) {
+        throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
+    }
+    
+    $this->set('book', $book);
+}
+?>
+
+Thay đổi nội dung view
+/src/Template/Books/view.ctp
+<div class="books view large-9 medium-8 columns content">
+    <h3><?= h($book->title) ?></h3>
+    <table class="vertical-table">
+        <tr>
+            <th scope="row"><?= __('Thư mục') ?></th>
+            <td><?= $book->has('category') ? $this->Html->link($book->category->name, ['controller' => 'Categories', 'action' => 'view', $book->category->slug]) : '' ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Tiêu đề') ?></th>
+            <td><?= h($book->title) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Ảnh bìa') ?></th>
+            <td><?php echo $this->Html->image($book->image , array('width' => '120px' ,'height' => '160px')); ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Link Download') ?></th>
+            <td><?= $this->Html->link('Link download' , $book->link_download , ['target' => '_blank']) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Giá gốc') ?></th>
+            <td><?= $this->Number->format($book->price , array('places' => 0 ,'after' => 'VND')) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Giá sale') ?></th>
+            <td><?= $this->Number->format($book->sale_price , array('places' => 0 ,'after' => 'VND')) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Số trang') ?></th>
+            <td><?= $this->Number->format($book->pages) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Tác giả') ?></th>
+            <td>
+            <?php 
+            $countWriter = 0;
+            foreach ($book->writers as $writer) {
+                $url = $this->Html->link($writer->name , '/tac-gia/' . $writer->slug , ['target' => '_self']);
+                if ($countWriter < count($book->writers) -1 ) {
+                    echo $url . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+                } else {
+                    echo $url;
+                }
+                
+                $countWriter++;
+            }
+            ?>
+            </td>
+        </tr>
+    </table>
+    <div class="row">
+        <h4><?= __('Thông tin sách') ?></h4>
+        <?= $this->Text->autoParagraph(h($book->info)); ?>
+    </div>
+    <div class="related">
+        <h4><?= __('Bình luận') ?></h4>
+        <?php if (!empty($book->comments)): ?>
+        <table cellpadding="0" cellspacing="0">
+            <tr>
+                <th scope="col"><?= __('Người bình luận') ?></th>
+                <th scope="col"><?= __('Nội dung bình luận') ?></th>
+                <th scope="col"><?= __('Ngày đăng') ?></th>
+                <th scope="col" class="actions"><?= __('Actions') ?></th>
+            </tr>
+            <?php foreach ($book->comments as $comments): ?>
+            <tr>
+                <td><?php echo $comments['user']['username']; ?></td>
+                <td><?php echo $comments->content; ?></td>
+                <td><?php echo date('Y-m-d H:i:s' , strtotime($comments->created)); ?></td>
+                <td class="actions">
+                    <?= $this->Html->link(__('View'), ['controller' => 'Comments', 'action' => 'view', $comments->id]) ?>
+                    <?= $this->Html->link(__('Edit'), ['controller' => 'Comments', 'action' => 'edit', $comments->id]) ?>
+                    <?= $this->Form->postLink(__('Delete'), ['controller' => 'Comments', 'action' => 'delete', $comments->id], ['confirm' => __('Are you sure you want to delete # {0}?', $comments->id)]) ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+        <?php endif; ?>
+    </div>
+    <div class="related">
+        <h4><?= __('Thông tin tác giả') ?></h4>
+        <?php if (!empty($book->writers)): ?>
+        <table cellpadding="0" cellspacing="0">
+            <tr>
+                <th scope="col" width="15%"><?= __('Name') ?></th>
+                <th scope="col" width="60%"><?= __('Biography') ?></th>
+                <th scope="col" width="25%" class="actions"><?= __('Actions') ?></th>
+            </tr>
+            <?php foreach ($book->writers as $writers): ?>
+            <tr>
+                <td><?= h($writers->name) ?></td>
+                <td><?= h($writers->biography) ?></td>
+                <td class="actions" align="center">
+                    <?= $this->Html->link(__('View'), ['controller' => 'Writers', 'action' => 'view', $writers->slug]) ?>
+                    <?= $this->Html->link(__('Edit'), ['controller' => 'Writers', 'action' => 'edit', $writers->id]) ?>
+                    <?= $this->Form->postLink(__('Delete'), ['controller' => 'Writers', 'action' => 'delete', $writers->id], ['confirm' => __('Are you sure you want to delete # {0}?', $writers->id)]) ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+        <?php endif; ?>
+    </div>
+</div>
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+10. Thêm sách liên quan cho trang hiển thị thông tin chi tiết sách
+
+
+
+

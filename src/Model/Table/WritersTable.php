@@ -21,8 +21,7 @@ use Cake\Validation\Validator;
  *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
-class WritersTable extends Table
-{
+class WritersTable extends Table {
 
     /**
      * Initialize method
@@ -42,7 +41,8 @@ class WritersTable extends Table
         $this->belongsToMany('Books', [
             'foreignKey' => 'writer_id',
             'targetForeignKey' => 'book_id',
-            'joinTable' => 'books_writers'
+            'joinTable' => 'books_writers' ,
+        	'through' => 'BooksWriters'
         ]);
     }
 
@@ -52,8 +52,7 @@ class WritersTable extends Table
      * @param \Cake\Validation\Validator $validator Validator instance.
      * @return \Cake\Validation\Validator
      */
-    public function validationDefault(Validator $validator)
-    {
+    public function validationDefault(Validator $validator) {
         $validator
             ->integer('id')
             ->allowEmpty('id', 'create');

@@ -13,8 +13,6 @@
             <tr>
                 <th scope="col"><?= $this->Paginator->sort('id') ?></th>
                 <th scope="col"><?= $this->Paginator->sort('name') ?></th>
-                <th scope="col"><?= $this->Paginator->sort('slug') ?></th>
-                <th scope="col"><?= $this->Paginator->sort('created') ?></th>
                 <th scope="col" class="actions"><?= __('Actions') ?></th>
             </tr>
         </thead>
@@ -23,8 +21,6 @@
             <tr>
                 <td><?= $this->Number->format($category->id) ?></td>
                 <td><?= h($category->name) ?></td>
-                <td><?= h($category->slug) ?></td>
-                <td><?= h($category->created) ?></td>
                 <td class="actions">
                     <?= $this->Html->link(__('View'), ['action' => 'view', $category->slug]) ?>
                     <?= $this->Html->link(__('Edit'), ['action' => 'edit', $category->id]) ?>

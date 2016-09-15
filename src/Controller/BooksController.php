@@ -4,6 +4,9 @@ namespace App\Controller;
 use App\Controller\AppController;
 use Cake\ORM\TableRegistry;
 use Cake\Network\Exception\NotFoundException;
+
+use App\Model\Table\CommentsTable;
+
 /**
  * Books Controller
  *
@@ -51,31 +54,60 @@ class BooksController extends AppController {
 
     /**
      * View method
-     * Hiển thị nội dung của từng quyển sách
+     * Hiển thị nội dung của từng quyển sách kèm theo comment và thông tin tác giả
      * @param string|null $slug Book slug.
      * @return \Cake\Network\Response|null
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function view($slug = null) {
- 
-//         $option = array(
-//                 'conditions' => ['slug' => $slug]
-//             );
-//         $book = $this->Books->find('all' , $option)->first();
-        
     	
+//     	$options = array(
+//     			'conditions' => [
+//     					'Books.slug' => $slug
+//     			] ,
+//     			'contain' => [
+//     					'Comments' => [] , 'Categories' => [] ,
+//     					'Writers' => function(\Cake\ORM\Query $q) {
+//     						return $q->select(['name' , 'slug']);
+//     					}
+//     			]
+//     	);
+//     	$book = $this->Books->find('all' , $options)->first();
+    	
+    	// Lấy thông tin của sách theo $slug nhận từ url
     	$book = $this->Books->find('all')
 							->where(['Books.slug' => $slug])
-    						->contain(['Categories', 'Writers', 'Comments'])
-    						->autoFields(false)
+    						->contain([
+    								'Categories', 
+    								'Writers', 
+    								// Lấy thêm dữ liệu từ bảng Users
+    								'Comments' => function(\Cake\ORM\Query $q) {
+    									return $q->contain(['Users'])->select();
+    								}
+    						])
     						->first();
     	
         if (empty($book)) {
             throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
         }
-
+        
+        // Lấy thông tin sách liên quan
+        $bookInstance = TableRegistry::get('Books');
+        $related_book = $bookInstance->find('all')
+        					->select(['title' , 'image' , 'slug' , 'sale_price'])
+        					->where([
+        							'category_id' => $book->category_id ,
+        							'Books.id <>' => $book->id ,
+        							'published' => 1
+        					])
+        					->order(['created' => 'desc'])
+        					->contain([
+        							'Writers'
+        					]);
+        
+        $this->set('related_book' , $related_book);
+        
         $this->set('book', $book);
-        $this->set('_serialize', ['book']);
     }
 
     /**

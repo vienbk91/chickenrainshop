@@ -2,6 +2,9 @@
 namespace App\Controller;
 
 use App\Controller\AppController;
+use Cake\ORM\TableRegistry;
+use App\Model\Table\BooksTable;
+
 
 /**
  * Writers Controller
@@ -17,9 +20,9 @@ class WritersController extends AppController {
      */
     public $paginate = array();
     public function index() {
-        /* Khởi tạo biến $prigate  */
+        /* Khởi tạo gía trị mới cho biến toàn cục $prigate */
     	$this->paginate = array(
-    			'fields' => ['id' , 'name'] ,
+    			'fields' => ['id' , 'name' , 'slug'] ,
     			'order' => ['name' => 'asc'] ,
     			'limit' => 5
     	);
@@ -38,6 +41,7 @@ class WritersController extends AppController {
      */
     public function view($slug = null) {
 
+    	// Lấy toàn bộ thông tin của tác giả có slug tương ứng với param được truyền vào từ view
     	$writer = $this->Writers->find('all')
 							->where(['Writers.slug' => $slug])
 							->contain(['Books'])
@@ -45,34 +49,29 @@ class WritersController extends AppController {
 							->first();
 
         $this->set('writer', $writer);
-        $this->set('_serialize', ['writer']);
 
-        $this->paginate = array(
-            'books' => array(
-                'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
-                'order' => ['created' => 'desc'] ,
-                'limit' => 5 , 
-                'contain' => array(
-                    'Writers' => function(\Cake\ORM\Query $q) {
-                            return $q->select(['name' , 'slug']);
-                    } 
-                ) ,
-                
-               'joins' => array(
-                    array('type' => 'LEFT', 'alias' => 'BooksWriters', 'table' => 'books_writers' , 'conditions' => 'BooksWriters.book_id = Books.id') ,
-                    array('type' => 'LEFT', 'alias' => 'Writers', 'table' => 'writers' , 'conditions' => 'Writers.id = BooksWriters.writer_id')
-                ) ,
-                'conditions' => array(
-                    'Books.published' => 1 , 
-                    'Writers.slug' => $slug
-                )
-            )
-        );
+		
+        // Lấy ra tất cả các cuốn sách có slug tác giả là $slug
+        /**
+         * Link tham khảo: http://stackoverflow.com/questions/29737422/conditions-to-paginate-for-belongstomany-cakephp-3
+         */
+        $booksInstance = TableRegistry::get('books');
+        $books = $booksInstance->find()
+        					->matching('Writers', function(\Cake\ORM\Query $q) use ( $slug ) {
+        							return $q->where([
+        									'Writers.slug' => $slug
+        							]);
+        						}
+        					);
         
-        // Nếu để trống thì nó mặc định lấy controller của model hiện tại
-        // Nên cần khai báo model muốn sử dụng
-        $books = $this->paginate('Books');
-        $this->set(compact('books'));
+		// Thêm điều kiện phân trang
+        $this->paginate = [
+        		'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+        		'order' =>  ['created' => 'desc'] , // Từ mới nhất đến cũ dần
+        		'limit'=>2
+        ];
+		$this->set('books' , $this->paginate($books));
+		
     }
 
     /**
@@ -104,8 +103,7 @@ class WritersController extends AppController {
      * @return \Cake\Network\Response|void Redirects on successful edit, renders view otherwise.
      * @throws \Cake\Network\Exception\NotFoundException When record not found.
      */
-    public function edit($id = null)
-    {
+    public function edit($id = null) {
         $writer = $this->Writers->get($id, [
             'contain' => ['Books']
         ]);
@@ -113,7 +111,6 @@ class WritersController extends AppController {
             $writer = $this->Writers->patchEntity($writer, $this->request->data);
             if ($this->Writers->save($writer)) {
                 $this->Flash->success(__('The writer has been saved.'));
-
                 return $this->redirect(['action' => 'index']);
             } else {
                 $this->Flash->error(__('The writer could not be saved. Please, try again.'));
