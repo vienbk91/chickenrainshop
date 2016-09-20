@@ -47,8 +47,10 @@ Router::defaultRouteClass(DashedRoute::class);
  * Create by vienbk91 
  * Tạo router mới cho chickenrainshop
  */
+// Khởi tạo đường dẫn default của application là trang index của BooksController.
 Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
 
+// Định nghĩa đường dẫn cho trang hiển thị phân trang dữ liệu sách và trang xem thông tin sách
 Router::connect('/sach-moi' , array('controller' => 'Books' , 'action' => 'latest_books'));
 Router::connect('/sach-moi/:book_title', array('controller' => 'Books' , 'action' => 'view') , array('pass' => array('book_title')));
 

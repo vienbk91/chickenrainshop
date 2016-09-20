@@ -21,8 +21,8 @@ class BooksController extends AppController {
      */
     public function index() {
     	
-    	$books = $this->Books->latest();
-    	$this->set(compact('books'));
+    	$books = $this->Books->latest(); // Sử dụng latest là 1 thuộc tính được định nghĩa trong BooksTable Object
+    	$this->set(compact('books')); // Có chức năng tương tự với $this->set('books' , $books)
     	
 	}
 	
@@ -73,6 +73,16 @@ class BooksController extends AppController {
 //     			]
 //     	);
 //     	$book = $this->Books->find('all' , $options)->first();
+
+    	if ($this->request->is('post')) {
+    		$commentInstance = TableRegistry::get('Comments');
+    		$comment = $commentInstance->newEntity($this->request->data);
+    		if ($commentInstance->save($comment)) {
+    			$this->Flash->success(__('Thêm bình luận thành công.'));
+    		} else {
+    			$this->Flash->error(__('Thêm bình luận thất bại.'));
+    		}
+    	}
     	
     	// Lấy thông tin của sách theo $slug nhận từ url
     	$book = $this->Books->find('all')
@@ -80,7 +90,7 @@ class BooksController extends AppController {
     						->contain([
     								'Categories', 
     								'Writers', 
-    								// Lấy thêm dữ liệu từ bảng Users
+    								// Lấy thêm dữ liệu từ bảng Users - là bảng có quan hệ với bảng Comments
     								'Comments' => function(\Cake\ORM\Query $q) {
     									return $q->contain(['Users'])->select();
     								}
@@ -91,23 +101,38 @@ class BooksController extends AppController {
             throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
         }
         
+        // Đưa thông tin sách đã được xử lý ra view
+        $this->set('book', $book);
+        
         // Lấy thông tin sách liên quan
         $bookInstance = TableRegistry::get('Books');
         $related_book = $bookInstance->find('all')
         					->select(['title' , 'image' , 'slug' , 'sale_price'])
         					->where([
-        							'category_id' => $book->category_id ,
+        							'Books.category_id' => $book->category_id ,
         							'Books.id <>' => $book->id ,
-        							'published' => 1
+        							'Books.published' => 1
         					])
         					->order(['created' => 'desc'])
         					->contain([
-        							'Writers'
+        							'Writers' => function(\Cake\ORM\Query $q) {
+        								return $q->select(['name' , 'slug']);
+        							}
         					]);
         
-        $this->set('related_book' , $related_book);
+         
+        // Hiển thị toàn bộ sách trong cùng categories
+        // $this->set('related_book' , $related_book);
         
-        $this->set('book', $book);
+        // Phân trang sách trong cùng catogories
+        $this->paginate = [
+        		'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+        		'order' =>  ['created' => 'desc'] , // Từ mới nhất đến cũ dần
+        		'limit'=>2
+        ];
+        $this->set('related_book' , $this->paginate($related_book));
+        
+        
     }
 
     /**
@@ -182,6 +207,13 @@ class BooksController extends AppController {
         return $this->redirect(['action' => 'index']);
     }
     
-    
+    public function addComment() {
+    	
+    	
+    	
+    	$input = $this->request->data();
+    	pr($input);
+    	exit();
+    }
     
 }

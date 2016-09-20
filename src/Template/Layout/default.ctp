@@ -28,6 +28,7 @@ $cakeDescription = 'Chickenrain-shopホームページ';
 
     <?php echo $this->Html->css('base.css'); ?>
     <?php echo $this->Html->css('cake.css'); ?>
+    <?php echo $this->Html->script('jquery-3.1.0.min'); ?>
 
     <?php echo $this->fetch('meta'); ?>
     <?php echo $this->fetch('css'); ?>

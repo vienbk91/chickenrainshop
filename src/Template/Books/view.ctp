@@ -1,3 +1,19 @@
+<script type="text/javascript">
+function checkContent() {
+	if ($.trim($('#content').val())==="") {
+		$("#comment").submit(function(){
+			return false;
+		});
+		alert('Nội dung ghi chú không được để trống ! Hãy nhập vào !');
+		//document.addForm.content.focus();
+		$("#content").focus();
+		return false;
+	} else {
+		return true;
+	}
+}
+</script>
+
 <div class="books view large-9 medium-8 columns content">
     <h3><?= h($book->title) ?></h3>
     <table class="vertical-table">
@@ -52,6 +68,8 @@
         <h4><?= __('Thông tin sách') ?></h4>
         <?= $this->Text->autoParagraph(h($book->info)); ?>
     </div>
+    
+    <!-- Hiển thị comments -->
     <div class="related">
         <h4><?= __('Bình luận') ?></h4>
         <?php if (!empty($book->comments)): ?>
@@ -66,7 +84,12 @@
             <tr>
                 <td><?php echo $comments['user']['username']; ?></td>
                 <td><?php echo $comments->content; ?></td>
-                <td><?php echo date('Y-m-d H:i:s' , strtotime($comments->created)); ?></td>
+                <td>
+                <?php
+                date_default_timezone_set('Asia/Tokyo');
+                echo date('Y-m-d H:i:s' , strtotime($comments->created . " GMT"));
+                ?>
+                </td>
                 <td class="actions">
                     <?= $this->Html->link(__('View'), ['controller' => 'Comments', 'action' => 'view', $comments->id]) ?>
                     <?= $this->Html->link(__('Edit'), ['controller' => 'Comments', 'action' => 'edit', $comments->id]) ?>
@@ -77,7 +100,27 @@
         </table>
         <?php endif; ?>
     </div>
+    <!-- Kết thúc việc hiển thị comments -->
+    
+    <!-- Thêm comments -->
     <div class="related">
+    	<h4><?= __('Thêm bình luận') ?></h4>
+	    <form action="<?php echo Cake\Routing\Router::url('/sach-moi/' . $book->slug); ?>". <?= $book->slug ?> method="post" name="comment" id="comment" accept-charset="utf-8" >
+	    <fieldset>
+	        <label>Nội dung bình luận</label>
+	        <textarea rows="8" cols="5" name="content" id="content" style="width: 100% !important;"><?php  ?></textarea>
+	    </fieldset>
+	    <input type="hidden" name="user_id" id="user_id" value="1" />
+	    <input type="hidden" name="book_id" id="book_id" value="<?php echo $book->id; ?>" />
+	    <input type="hidden" name="slug" id="slug" value="<?php echo $book->slug; ?>" />
+	    <input type="submit" name="submit" id="submit" value="Đăng bình luận" 
+	    style="background: #966600;float: left;text-transform: uppercase;box-shadow: none;border-width: 0; height: 40px;border: 0px;width: 140px;" onclick="checkContent()">
+	    </form>
+	</div>
+    <!-- Kết thúc thêm comments -->
+    
+    
+    <div class="related" style="margin-top: 80px;">
         <h4><?= __('Thông tin tác giả') ?></h4>
         <?php if (!empty($book->writers)): ?>
         <table cellpadding="0" cellspacing="0">
@@ -102,7 +145,11 @@
     </div>
     
     <div class="related">
-    	<h4><?= __('Các cuốn sách liên quan') ?></h4>
+    	<h4><?= __('Sách trong cùng thư mục') ?></h4>
+    	<div class="books index large-9 medium-8 columns content">
+			<?php echo $this->element('books' , array('books' => $related_book)); ?>
+			<?php echo $this->element('paginator' , array('object' => 'quyển sách')); ?>
+		</div>
     </div>
     
 </div>
