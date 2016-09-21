@@ -53,6 +53,7 @@ Router::connect('/' , array('controller' => 'Books' , 'action' => 'index'));
 // Định nghĩa đường dẫn cho trang hiển thị phân trang dữ liệu sách và trang xem thông tin sách
 Router::connect('/sach-moi' , array('controller' => 'Books' , 'action' => 'latest_books'));
 Router::connect('/sach-moi/:book_title', array('controller' => 'Books' , 'action' => 'view') , array('pass' => array('book_title')));
+Router::connect('/sach-moi/tim-kiem' , array('controller' => 'Books' , 'action' => 'search'));
 
 Router::connect('/tac-gia'  , array('controller' => 'Writers' , 'action' => 'index'));
 Router::connect('/tac-gia/:writer_title'  , array('controller' => 'Writers' , 'action' => 'view') , array('pass' => array('writer_title')));

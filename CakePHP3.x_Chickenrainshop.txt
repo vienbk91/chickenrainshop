@@ -2,6 +2,7 @@
 // CakePHP3.3.1 Kiến thức cơ bản và cách xây dựng chickenrainshop project
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 Phần 1: Các thiết lập ban đầu
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -150,7 +151,7 @@ Tuy nhiên chuyển sang CakePHP3.x thì nó có cách viết khá lạ
 Vậy cách này thì có gì khác cách trên ? Thực ra là không khác gì nhau cả, cách viết này
 là một dạng short_open_tag (bạn có thể đọc về echo trong php để tìm hiểu về cách viết này)
 
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 Phần 2: Quản lý nội dung
 4. Các phương pháp truy vấn dữ liệu trong CakePHP
 
@@ -194,11 +195,10 @@ $notes = $this->Note->find('first');
 
 ?>
 
-Trong cakephp2.x thì việc sử dụng find($type , $option) sẽ không có vấn đề gì xảy ra nhưng
-từ cakephp3.x trở đi, nó đã được thay thế khá nhiều.
+Trong cakephp2.x thì việc sử dụng find($type , $option) sẽ không có vấn đề gì xảy ra nhưng từ cakephp3.x trở đi, nó đã được thay thế khá nhiều.
 
-Ở cakephp2.x thì kết quả của find sẽ trả về mảng, tuy nhiên từ 3.x trở đi thì tất cả đều được
-đưa về dưới dạng object. Vì thế việc sử dụng hàm pr($var) khá là khó debug trong cakephp3.x
+Ở cakephp2.x thì kết quả của find sẽ trả về mảng, tuy nhiên từ 3.x trở đi thì tất cả đều được đưa về dưới dạng object. 
+Vì thế việc sử dụng hàm pr($var) khá là khó debug trong cakephp3.x
 
 Trong cakephp3.x document, hàm find() cũng được support nhưng đã có nhiều thay đổi trong cách sử dụng.
 Do từ 3.x trở đi, cake không sử dụng trực tiếp 1 class Model mà thông qua 2 class Table và Modify nên
@@ -342,7 +342,8 @@ Trong BooksTable ta thấy định nghĩa:
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 6. Sử dụng Containable Behavior
-Bài này tạm thời bỏ qua , vì trong cakephp2.x thì nó được support nhưng trong các phiên bản cakephp3.x thì nó đã được xóa bỏ.
+Bài này tạm thời bỏ qua
+(vì trong cakephp2.x thì nó được support nhưng trong các phiên bản cakephp3.x thì nó đã được bỏ đi mà sử dụng.)
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 7. Tạo lại chức năng hiển thị book mới
@@ -829,24 +830,22 @@ thay đổi nội dung phần comments và phần thông tin tác giả
 <?php 
 public function view($slug = null) {
 
-    // Lấy thông tin của sách theo $slug nhận từ url
-    $book = $this->Books->find('all')
-                    ->where(['Books.slug' => $slug])
-                    ->contain([
-                            'Categories', 
-                            'Writers', 
-                            // Lấy thêm dữ liệu từ bảng Users
-                            'Comments' => function(\Cake\ORM\Query $q) {
-                                return $q->contain(['Users'])->select();
-                            }
-                    ])
-                    ->first();
-    
-    if (empty($book)) {
-        throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
-    }
-    
-    $this->set('book', $book);
+    	// Lấy thông tin của sách theo $slug nhận từ url
+    	$book = $this->Books->find('all')
+							->where(['Books.slug' => $slug])
+    						->contain([
+    								'Categories', 
+    								'Writers',
+    								'Comments'
+    						])
+    						->first();
+    	
+        if (empty($book)) {
+            throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
+        }
+        
+        // Đưa thông tin sách đã được xử lý ra view
+        $this->set('book', $book);
 }
 ?>
 
@@ -906,6 +905,98 @@ Thay đổi nội dung view
         <h4><?= __('Thông tin sách') ?></h4>
         <?= $this->Text->autoParagraph(h($book->info)); ?>
     </div>
+</div>
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+11. Thay đổi thông tin comment trong phần hiển thị thông tin sách và thông tin tác giả
+Ở đây mục đích của mình là lược bỏ các thông tin không cần thiết trong hiển thị comment và thay vì hiển thị user_id, ta sẽ đi hiển thị thông tin tên người dùng.
+Thông tin tên người dùng được lưu trữ trong bảng Users , và có khóa ngoài user_id liên kết với bảng Comments. Như vậy ta sẽ bổ sung thêm thông tin Users trong câu lệnh query như sau: 
+
+/src/Controller/BooksController.php
+
+<?php 
+public function view($slug = null) {
+	// Lấy thông tin của sách theo $slug nhận từ url
+	$book = $this->Books->find('all')
+						->where(['Books.slug' => $slug])
+						->contain([
+								'Categories', 
+								'Writers', 
+								// Lấy thêm dữ liệu từ bảng Users - là bảng có quan hệ với bảng Comments
+								'Comments' => function(\Cake\ORM\Query $q) {
+									return $q->contain(['Users'])->select();
+								}
+						])
+						->first();
+
+	if (empty($book)) {
+		throw new NotFoundException(__('Không tìm thấy cuốn sách này'));
+	}
+
+	// Đưa thông tin sách đã được xử lý ra view
+	$this->set('book', $book);
+}
+?>
+
+Thay đổi nội dung view 
+/src/Template/Books/view.ctp
+<div class="books view large-9 medium-8 columns content">
+    <h3><?= h($book->title) ?></h3>
+    <table class="vertical-table">
+        <tr>
+            <th scope="row"><?= __('Thư mục') ?></th>
+            <td><?= $book->has('category') ? $this->Html->link($book->category->name, ['controller' => 'Categories', 'action' => 'view', $book->category->slug]) : '' ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Tiêu đề') ?></th>
+            <td><?= h($book->title) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Ảnh bìa') ?></th>
+            <td><?php echo $this->Html->image($book->image , array('width' => '120px' ,'height' => '160px')); ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Link Download') ?></th>
+            <td><?= $this->Html->link('Link download' , $book->link_download , ['target' => '_blank']) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Giá gốc') ?></th>
+            <td><?= $this->Number->format($book->price , array('places' => 0 ,'after' => 'VND')) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Giá sale') ?></th>
+            <td><?= $this->Number->format($book->sale_price , array('places' => 0 ,'after' => 'VND')) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Số trang') ?></th>
+            <td><?= $this->Number->format($book->pages) ?></td>
+        </tr>
+        <tr>
+            <th scope="row"><?= __('Tác giả') ?></th>
+            <td>
+            <?php 
+			// Xử lý việc hiển thị nhiều tác giả (một cuốn sách có thể do nhiều tác giả viết) nên ta sẽ xử lý hiển thị cho đẹp và tạo đường dẫn đến trang thông tin tác giả
+            $countWriter = 0;
+            foreach ($book->writers as $writer) {
+                $url = $this->Html->link($writer->name , '/tac-gia/' . $writer->slug , ['target' => '_self']);
+                if ($countWriter < count($book->writers) -1 ) {
+                    echo $url . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+                } else {
+                    echo $url;
+                }
+                
+                $countWriter++;
+            }
+            ?>
+            </td>
+        </tr>
+    </table>
+    <div class="row">
+        <h4><?= __('Thông tin sách') ?></h4>
+        <?= $this->Text->autoParagraph(h($book->info)); ?>
+    </div>
+    
+    <!-- Thay đổi nội dung hiển thị comment: Chỉ hiển thị comment và thay user_id thành tên người comment -->
     <div class="related">
         <h4><?= __('Bình luận') ?></h4>
         <?php if (!empty($book->comments)): ?>
@@ -920,7 +1011,13 @@ Thay đổi nội dung view
             <tr>
                 <td><?php echo $comments['user']['username']; ?></td>
                 <td><?php echo $comments->content; ?></td>
-                <td><?php echo date('Y-m-d H:i:s' , strtotime($comments->created)); ?></td>
+				<!-- Hiển thị thời gian theo giờ GMT của khu vực Asia/Tokyo -->
+                <td>
+				<?php 
+				date_default_timezone_set('Asia/Tokyo');
+				echo date('Y-m-d H:i:s' , strtotime($comments->created . 'GMT')); 
+				?>
+				</td>
                 <td class="actions">
                     <?= $this->Html->link(__('View'), ['controller' => 'Comments', 'action' => 'view', $comments->id]) ?>
                     <?= $this->Html->link(__('Edit'), ['controller' => 'Comments', 'action' => 'edit', $comments->id]) ?>
@@ -931,6 +1028,8 @@ Thay đổi nội dung view
         </table>
         <?php endif; ?>
     </div>
+    
+    <!-- Rút gọn thông tin tác giả và thêm vào đường dẫn tới trang view thông tin tác giả -->
     <div class="related">
         <h4><?= __('Thông tin tác giả') ?></h4>
         <?php if (!empty($book->writers)): ?>
@@ -958,7 +1057,146 @@ Thay đổi nội dung view
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-10. Thêm sách liên quan cho trang hiển thị thông tin chi tiết sách
+12. Bổ sung phần hiển thị sách cùng thư mục trong trang thông tin sách 
+
+Để hiển thị sách cùng thư mục thì trong action view ta cần sử lý việc lấy ra thông tin của sách cùng category
+/src/Controller/BooksController.php
+<?php 
+/**
+ * View method
+ * Hiển thị nội dung của từng quyển sách kèm theo comment và thông tin tác giả
+ * @param string|null $slug Book slug.
+ * @return \Cake\Network\Response|null
+ * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
+ */
+public function view($slug = null) {
+	
+	/* 中断　- Phần mã được viết trong mục 11 */
+	/* Bổ sung phần code dưới đây vào để hiển thị các cuốn sách trong cùng thư mục */
+	// Lấy thông tin sách liên quan
+	$bookInstance = TableRegistry::get('Books');
+	$related_book = $bookInstance->find('all')
+						->select(['title' , 'image' , 'slug' , 'sale_price'])
+						->where([
+								'Books.category_id' => $book->category_id ,
+								'Books.id <>' => $book->id ,
+								'Books.published' => 1
+						])
+						->order(['created' => 'desc'])
+						->contain([
+								'Writers' => function(\Cake\ORM\Query $q) {
+									return $q->select(['name' , 'slug']);
+								}
+						]);
+	
+	 
+	// Hiển thị toàn bộ sách trong cùng categories
+	// $this->set('related_book' , $related_book);
+	
+	// Phân trang sách trong cùng catogories
+	$this->paginate = [
+			'fields' => ['id' , 'title' , 'slug' , 'sale_price' , 'image'] ,
+			'order' =>  ['created' => 'desc'] , // Từ mới nhất đến cũ dần
+			'limit'=>2
+	];
+	$this->set('related_book' , $this->paginate($related_book));
+}
+?>
+
+Bổ sung vào file /Template/Books/view.ctp 
+Thêm thẻ <div> vào ngay phía dưới phần hiển thị thông tin tác giả 
+
+<div class="related">
+	<h4><?= __('Sách trong cùng thư mục') ?></h4>
+	<div class="books index large-9 medium-8 columns content">
+		<?php echo $this->element('books' , array('books' => $related_book)); ?>
+		<?php echo $this->element('paginator' , array('object' => 'quyển sách')); ?>
+	</div>
+</div>
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+13. Tạo chức năng gửi comment cho trang hiển thị thông tin sách 
+Trong video hướng dẫn thì tác giả sử dụng FormHelper có sẵn của CakePHP để tạo các form. Tuy nhiên cách viết smaty enginee này khá khó chịu và mình cũng không thích lắm.
+Cho nên mình sẽ thay lại toàn bộ code phần gửi form comment thành mã HTML thuần như sau: 
+Phần mã này sẽ được thêm vào bên dưới phần hiển thị nội dung comment và trên phần hiển thị thông tin tác giả 
+
+/Template/Books/view.ctp 
+<!-- Thêm comments -->
+<div class="related">
+	<h4><?= __('Thêm bình luận') ?></h4>
+	<!-- 
+	Thông thường thì trong action của form sẽ được gọi đến action tương ứng trong controller , nhưng ở đây do ta đã thay đổi url thành các link thân thiện cho nên khi gọi đến các action trong controller 
+	thì url cũng sẽ hiển thị theo controller/action tương ứng mà ta gọi đến.
+	Vì thể ta sẽ sử dụng url được Router định nghĩa và nó vẫn sẽ gọi đến ['controller' => 'books' , 'action' => 'view'] , ['param' => $book->slug]
+	-->
+	<form action="<?php echo Cake\Routing\Router::url('/sach-moi/' . $book->slug); ?>". <?= $book->slug ?> method="post" name="comment" id="comment" accept-charset="utf-8" >
+	<fieldset>
+		<label>Nội dung bình luận</label>
+		<textarea rows="8" cols="5" name="content" id="content" style="width: 100% !important;"><?php  ?></textarea>
+	</fieldset>
+	<input type="hidden" name="user_id" id="user_id" value="1" />
+	<input type="hidden" name="book_id" id="book_id" value="<?php echo $book->id; ?>" />
+	<input type="hidden" name="slug" id="slug" value="<?php echo $book->slug; ?>" />
+	<input type="submit" name="submit" id="submit" value="Đăng bình luận" 
+	style="background: #966600;float: left;text-transform: uppercase;box-shadow: none;border-width: 0; height: 40px;border: 0px;width: 140px;" onclick="checkContent()">
+	</form>
+</div>
+<!-- Kết thúc thêm comments -->
+
+/src/Controller/BooksController.php
+Trong controller ta sẽ xử lý form như sau :
+Bổ sung đoạn mã sau vào phần action view của BooksController
+<?php 
+public function view($slug = null) {
+	
+	if ($this->request->is('post')) { // Kiểm tra có request post gửi lên từ view hay không 
+		$commentInstance = TableRegistry::get('Comments'); // Tạo 1 thể hiện của Comment Table Object
+		$comment = $commentInstance->newEntity($this->request->data); // Tạo ra 1 emtity xử lý việc thêm, sửa, xóa dữ liệu , ở đây dữ liệu đầu vào chính là dữ liệu được lấy thông qua $this->request->data
+		if ($commentInstance->save($comment)) { // Thực hiện lưu dữ liệu
+			$this->Flash->success(__('Thêm bình luận thành công.'));
+		} else {
+			$this->Flash->error(__('Thêm bình luận thất bại.'));
+		}
+	}
+	
+	// Phía dưới là phần mã đã đc viết trong phần 11,12 
+}
+
+?>
+
+Ở đây ta chú ý trong view ta có thực hiên 1 hàm onclick để check việc content trống thì sẽ không được submit gửi bình luận 
+Do ta có sử dụng thêm jquery nên trước hết ta cần khai báo thêm thư viện jquery trong Template/Layout/default như sau: 
+Thêm file thư viện jquery 
+/webroot/js/jquery-3.1.0.min.js
+
+/Template/Layout/default
+<?php echo $this->Html->script('jquery-3.1.0.min'); ?>
+
+Và ta sẽ đặt hàm xử lý javascript trên đầu file view như sau
+<script type="text/javascript">
+function checkContent() {
+	if ($.trim($('#content').val())==="") {
+		$("#comment").submit(function(){
+			return false;
+		});
+		alert('Nội dung ghi chú không được để trống ! Hãy nhập vào !');
+		//document.addForm.content.focus();
+		$("#content").focus();
+		return false;
+	} else {
+		return true;
+	}
+}
+</script>
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+14. Counter cache - Ứng dụng đếm số comments của từng quyển sách
+
+Tạm thời bỏ qua phần này 
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+15. Tạo chức năng tìm kiếm sách trên ChickenRainShop
 
 
 
